@@ -18,7 +18,7 @@ No middlemen. No scams. Just trust, transparency, and code.
 ## 🛠️ Tech Stack
 - **Smart Contracts:** Solidity, Hardhat, OpenZeppelin  
 - **Blockchain:** Flare Coston2 Testnet  
-- **Frontend:** React + Vite, wagmi/viem, RainbowKit, TailwindCSS + shadcn/ui
+- **Frontend:** Next.js, wagmi/viem, RainbowKit, TailwindCSS + shadcn/ui
 
 ### Prerequisites
 - [Node.js](https://nodejs.org/) >= 18  
@@ -44,8 +44,9 @@ safegig/
 │   ├── scripts/       # Deployment scripts
 │   └── test/          # Contract tests
 │
-├── frontend/          # React frontend
-│   ├── src/           # Components, pages, hooks
+├── frontend/          # Next.js frontend
+│   ├── app/           # App router pages & layouts
+│   ├── components/    # Reusable UI components
 │   ├── public/        # Static assets
 │   └── package.json   # Frontend dependencies
 │
@@ -89,7 +90,7 @@ Deploy to Flare Coston2 testnet:
 
 yarn hardhat run scripts/deploy.js --network coston2
 
-4. Frontend (React + Vite)
+4. Frontend (Next.js)
 
 Start the frontend:
 
