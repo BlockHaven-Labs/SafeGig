@@ -159,7 +159,7 @@ export default function HeroSection() {
       </div>
 
       <div className="max-w-7xl mx-auto text-center relative z-10">
-        <h1 className="text-4xl text-blue-500 sm:text-5xl lg:text-6xl font-serif font-bold text-foreground mb-6">
+        <h1 className="text-4xl text-white sm:text-5xl lg:text-6xl font-serif font-bold text-foreground mb-6">
           Escrow for Freelance Gigs,{" "}
           <span className="text-blue-400">Powered by Blockchain</span>
         </h1>
