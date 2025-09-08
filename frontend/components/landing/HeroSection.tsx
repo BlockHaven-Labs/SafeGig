@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 
 export default function HeroSection() {
   return (
-    <section className="py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <section className="py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden  ">
       <div className="absolute inset-0 z-0">
         <svg
           className="absolute inset-0 w-full h-full"
@@ -13,7 +13,7 @@ export default function HeroSection() {
           preserveAspectRatio="xMidYMid slice"
         >
           <defs>
-            <radialGradient id="neonPulse1" cx="50%" cy="50%" r="50%">
+            <radialGradient id="neonPulse1" cx="80%" cy="50%" r="50%">
               <stop offset="0%" stopColor="rgba(34,197,94,0.8)" />
               <stop offset="30%" stopColor="rgba(34,197,94,0.6)" />
               <stop offset="70%" stopColor="rgba(16,185,129,0.4)" />
@@ -159,7 +159,7 @@ export default function HeroSection() {
       </div>
 
       <div className="max-w-7xl mx-auto text-center relative z-10">
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-bold text-foreground mb-6">
+        <h1 className="text-4xl text-blue-500 sm:text-5xl lg:text-6xl font-serif font-bold text-foreground mb-6">
           Escrow for Freelance Gigs,{" "}
           <span className="text-blue-400">Powered by Blockchain</span>
         </h1>
@@ -180,7 +180,7 @@ export default function HeroSection() {
           <Button
             size="lg"
             variant="outline"
-            className="border-blue-500 text-blue-400 hover:bg-blue-500/10 px-8 py-3 bg-transparent"
+            className="border-blue-500 text-blue-400 hover:bg-blue-500/10 hover:text-blue-700 px-8 py-3 bg-transparent"
           >
             Learn More
           </Button>
