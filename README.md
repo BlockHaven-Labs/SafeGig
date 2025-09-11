@@ -158,6 +158,8 @@ Commit changes with conventional commits.
 
 - Ensure all tests pass before merge.
 
+Figma link: https://www.figma.com/design/8JjQlegHGULn7A4nUjsYr5/safeGig_Main?node-id=0-1&p=f&t=UcA2gs9qExvOnStP-0
+
 📈 Roadmap
 
 ✅ MVP Escrow: One job → fund → approve/release → refund
