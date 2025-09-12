@@ -1,26 +1,47 @@
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
-import { Navbar } from "@/components/navbar"
+import type React from "react";
+import type { Metadata } from "next";
+import { Space_Grotesk, DM_Sans } from "next/font/google";
+import { Suspense } from "react";
+import "./globals.css";
+import { WalletProvider } from "@/lib/wallet-context";
+import { GigProvider } from "@/lib/gig-context";
+import { ThemeProvider } from "@/lib/theme-provider";
 
-const inter = Inter({ subsets: ["latin"] })
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-space-grotesk",
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-dm-sans",
+});
 
 export const metadata: Metadata = {
-  title: "SafeGig dApp",
-  description: "Secure freelancing platform",
-}
+  title: "SafeGig - Trustless Freelance Escrow Platform",
+  description:
+    "Secure blockchain-based escrow for freelancers and clients. Get paid safely with smart contracts.",
+  generator: "v0.app",
+};
 
 export default function RootLayout({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        {/* <Navbar /> */}
-        {children}
+      <body className={`font-sans ${spaceGrotesk.variable} ${dmSans.variable}`}>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          <WalletProvider>
+            <GigProvider>
+              <Suspense fallback={null}>{children}</Suspense>
+            </GigProvider>
+          </WalletProvider>
+        </ThemeProvider>
       </body>
     </html>
-  )
+  );
 }
