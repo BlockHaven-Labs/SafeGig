@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import WalletButton from "@/components/WalletButton"
+import { WalletButton } from "../wallet-button"
 
 export default function Navbar() {
   return (

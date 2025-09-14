@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import "./globals.css";
 import { WalletProvider } from "@/lib/wallet-context";
 import { GigProvider } from "@/lib/gig-context";
-import { ThemeProvider } from "@/lib/theme-provider";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   title: "SafeGig - Trustless Freelance Escrow Platform",
   description:
     "Secure blockchain-based escrow for freelancers and clients. Get paid safely with smart contracts.",
-  generator: "v0.app",
+  generator: "safeGig.app",
 };
 
 export default function RootLayout({
@@ -32,7 +32,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`font-sans ${spaceGrotesk.variable} ${dmSans.variable}`}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <WalletProvider>
