@@ -12,7 +12,14 @@
   ],
   "scripts": {
     "dev:frontend": "yarn workspace frontend dev",
+    "build:frontend": "yarn workspace frontend build",
     "dev:contract": "yarn workspace contract build",
-    "dev:all": "yarn dev:frontend & yarn dev:contract"
+    "dev:all": "yarn dev:frontend & yarn dev:contract",
+    "build:all": "yarn workspace frontend build && yarn workspace contract build",
+    "test": "yarn workspaces run test",
+    "lint": "yarn workspaces run lint"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }

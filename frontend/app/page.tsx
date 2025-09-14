@@ -4,9 +4,9 @@ import Navbar from "@/components/landing/Navbar"
 import CTASection from "@/components/landing/CTASection"
 import Footer from "@/components/landing/Footer"
 
-function Page() {
+function LandingPage() {
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-background">
       <Navbar />
       <HeroSection />
       <CTASection />
@@ -15,4 +15,4 @@ function Page() {
   )
 }
 
-export default Page
+export default LandingPage
