@@ -1,7 +1,6 @@
 # General README for SafeGig
 
-<video controls src="20250914-2001-04.1930724.mp4" title="Title"></video>
-
+![alt text](image.png)
 ## Overview
 
 SafeGig is a decentralized escrow platform for freelancers and clients, built on the Flare Network. It helps freelancers and clients work together safely by locking funds in a smart contract and releasing them only when both sides agree.  
