@@ -8,7 +8,7 @@
   "private": true,
   "workspaces": [
     "frontend",
-    "contract"
+    "contracts"
   ],
   "scripts": {
     "dev:frontend": "yarn workspace frontend dev",
