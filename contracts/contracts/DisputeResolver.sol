@@ -5,6 +5,8 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "../interfaces/IJobManager.sol";
+import "../interfaces/ISafeGigRegistry.sol";
 
 contract DisputeResolver is AccessControl, Pausable, ReentrancyGuard {
     using Counters for Counters.Counter;
