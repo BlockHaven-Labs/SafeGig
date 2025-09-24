@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "../interfaces/ISafeGigRegistry.sol";
 
 contract JobManager is AccessControl, Pausable, ReentrancyGuard {
     using Counters for Counters.Counter;
