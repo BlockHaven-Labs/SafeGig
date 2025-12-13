@@ -70,7 +70,7 @@ contract DisputeResolver is AccessControl, Pausable, ReentrancyGuard {
     mapping(address => uint256) public arbitratorActiveDisputes;
 
     uint256 public maxActiveDisputesPerArbitrator = 5;
-    uint256 public disputeTimeout = 14 days; // Auto-resolve timeout
+    uint256 public disputeTimeout = 15 days; // Auto-resolve timeout
 
     event DisputeCreated(
         uint256 indexed disputeId,
@@ -248,7 +248,7 @@ contract DisputeResolver is AccessControl, Pausable, ReentrancyGuard {
         emit DisputeResolved(_disputeId, _resolution, msg.sender);
     }
 
-    function appealDispute(uint256 _disputeId, string memory _appealReason) external {
+    function appealDispute(uint256 _disputeId /* string memory _appealReason */) external {
         Dispute storage dispute = disputes[_disputeId];
         
         require(

@@ -11,8 +11,14 @@ contract SafeGigRegistry is AccessControl, Pausable, ReentrancyGuard {
 
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant MODERATOR_ROLE = keccak256("MODERATOR_ROLE");
+    bytes32 public constant JOB_MANAGER_ROLE = keccak256("JOB_MANAGER_ROLE");
 
-    enum UserType { None, Freelancer, Client, Both }
+    enum UserType {
+        None,
+        Freelancer,
+        Client,
+        Both
+    }
 
     struct UserProfile {
         string metadataURI; // IPFS hash for detailed profile
@@ -47,7 +53,11 @@ contract SafeGigRegistry is AccessControl, Pausable, ReentrancyGuard {
 
     Counters.Counter private userCounter;
 
-    event UserRegistered(address indexed user, UserType userType, uint256 timestamp);
+    event UserRegistered(
+        address indexed user,
+        UserType userType,
+        uint256 timestamp
+    );
     event ProfileUpdated(address indexed user, string metadataURI);
     event UserVerified(address indexed user);
     event StatsUpdated(address indexed user, UserType userType);
@@ -64,7 +74,10 @@ contract SafeGigRegistry is AccessControl, Pausable, ReentrancyGuard {
         string[] memory _skills
     ) external whenNotPaused nonReentrant {
         require(_userType != UserType.None, "Invalid user type");
-        require(userProfiles[msg.sender].userType == UserType.None, "User already registered");
+        require(
+            userProfiles[msg.sender].userType == UserType.None,
+            "User already registered"
+        );
         require(bytes(_metadataURI).length > 0, "Metadata URI required");
 
         userProfiles[msg.sender] = UserProfile({
@@ -86,8 +99,11 @@ contract SafeGigRegistry is AccessControl, Pausable, ReentrancyGuard {
         string memory _location,
         string[] memory _skills
     ) external {
-        require(userProfiles[msg.sender].userType != UserType.None, "User not registered");
-        
+        require(
+            userProfiles[msg.sender].userType != UserType.None,
+            "User not registered"
+        );
+
         userProfiles[msg.sender].metadataURI = _metadataURI;
         userProfiles[msg.sender].location = _location;
         userProfiles[msg.sender].skills = _skills;
@@ -96,7 +112,10 @@ contract SafeGigRegistry is AccessControl, Pausable, ReentrancyGuard {
     }
 
     function verifyUser(address _user) external onlyRole(MODERATOR_ROLE) {
-        require(userProfiles[_user].userType != UserType.None, "User not registered");
+        require(
+            userProfiles[_user].userType != UserType.None,
+            "User not registered"
+        );
         userProfiles[_user].isVerified = true;
         emit UserVerified(_user);
     }
@@ -108,7 +127,7 @@ contract SafeGigRegistry is AccessControl, Pausable, ReentrancyGuard {
         uint256 _successRate,
         uint256 _responseTime,
         uint256 _hourlyRate
-    ) external onlyRole(ADMIN_ROLE) {
+    ) external onlyRole(JOB_MANAGER_ROLE) {
         freelancerStats[_freelancer] = FreelancerStats({
             jobsCompleted: _jobsCompleted,
             totalEarned: _totalEarned,
@@ -126,7 +145,7 @@ contract SafeGigRegistry is AccessControl, Pausable, ReentrancyGuard {
         uint256 _jobsPosted,
         uint256 _jobsCompleted,
         uint256 _responseTime
-    ) external onlyRole(ADMIN_ROLE) {
+    ) external onlyRole(JOB_MANAGER_ROLE) {
         clientStats[_client] = ClientStats({
             totalSpent: _totalSpent,
             jobsPosted: _jobsPosted,
@@ -146,12 +165,26 @@ contract SafeGigRegistry is AccessControl, Pausable, ReentrancyGuard {
         return uint8(userProfiles[user].userType);
     }
 
-    function getUserProfile(address user) external view returns (string memory) {
+    function getUserProfile(
+        address user
+    ) external view returns (string memory) {
         return userProfiles[user].metadataURI;
     }
 
     function getTotalUsers() external view returns (uint256) {
         return userCounter.current();
+    }
+
+    function getClientStats(
+        address _client
+    ) external view returns (ClientStats memory) {
+        return clientStats[_client];
+    }
+
+    function getFreelancerStats(
+        address _freelancer
+    ) external view returns (FreelancerStats memory) {
+        return freelancerStats[_freelancer];
     }
 
     // Admin functions

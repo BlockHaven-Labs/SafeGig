@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import { Space_Grotesk, DM_Sans } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
-import { WalletProvider } from "@/lib/wallet-context";
-import { GigProvider } from "@/lib/gig-context";
 import { ThemeProvider } from "@/components/theme-provider";
+import { WalletProvider } from "@/providers/WalletProvider";
+import { SafeGigProvider } from "@/contexts";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -36,9 +36,9 @@ export default function RootLayout({
       <body className={`font-sans ${spaceGrotesk.variable} ${dmSans.variable}`}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <WalletProvider>
-            <GigProvider>
+            <SafeGigProvider>
               <Suspense fallback={null}>{children}</Suspense>
-            </GigProvider>
+            </SafeGigProvider>
           </WalletProvider>
         </ThemeProvider>
       </body>

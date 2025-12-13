@@ -28,7 +28,7 @@ yarn hardhat node
 Deploy the contract to the local node:
 ```bash
 yarn hardhat run scripts/deploy.js --network localhost
-```
+``` 
 
 Interact with the deployed contract (example script):
 ```bash
