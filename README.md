@@ -3,7 +3,7 @@
 ![alt text](image.png)
 ## Overview
 
-SafeGig is a decentralized escrow platform for freelancers and clients, built on the Flare Network. It helps freelancers and clients work together safely by locking funds in a smart contract and releasing them only when both sides agree.  
+SafeGig is a decentralized escrow platform for freelancers and clients, built on the ethereum Network. It helps freelancers and clients work together safely by locking funds in a smart contract and releasing them only when both sides agree.  
 
 No middlemen. No scams. Just trust, transparency, and code.
 
@@ -17,13 +17,13 @@ No middlemen. No scams. Just trust, transparency, and code.
 
 ## 🛠️ Tech Stack
 - **Smart Contracts:** Solidity, Hardhat, OpenZeppelin  
-- **Blockchain:** Flare Coston2 Testnet  
+- **Blockchain:** Ethereum Testnet  
 - **Frontend:** Next.js, wagmi/viem, RainbowKit, TailwindCSS + shadcn/ui
 
 ### Prerequisites
 - [Node.js](https://nodejs.org/) >= 18  
-- [MetaMask](https://metamask.io/) (with Coston2 network added)  
-- C2FLR from the [Flare Faucet](https://faucet.flare.network/)
+- [MetaMask](https://metamask.io/) (with sepolia network added)  
+- Sepolia from the [Sepolia Faucet](https://faucet.sepolia.network/)
 
 ## 🔍 Demo Flow
 - Client creates a job → locks funds.
@@ -86,9 +86,9 @@ yarn hardhat compile
 yarn hardhat test
 
 
-Deploy to Flare Coston2 testnet:
+Deploy to sepolia testnet:
 
-yarn hardhat run scripts/deploy.js --network coston2
+yarn hardhat run scripts/deploy.js --network sepolia
 
 4. Frontend (Next.js)
 
@@ -168,7 +168,7 @@ Figma link: https://www.figma.com/design/8JjQlegHGULn7A4nUjsYr5/safeGig_Main?nod
 
 🔜 Dispute Resolution: DAO/Kleros arbitration
 
-🔜 Price Feeds: Integrate Flare FTSOv2 for USD denominated payments
+🔜 Price Feeds: Integrate chainlink for real life data feed
 
 🔜 Reputation System: On-chain freelancer ratings
 

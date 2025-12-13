@@ -11,21 +11,22 @@ contract JobManager is AccessControl, Pausable, ReentrancyGuard {
     using Counters for Counters.Counter;
 
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    bytes32 public constant JOB_MANAGER_ROLE = keccak256("JOB_MANAGER_ROLE");
 
-    enum JobStatus { 
-        Open,        // 0 - Job is posted and accepting applications
-        Assigned,    // 1 - Job assigned to freelancer
-        InProgress,  // 2 - Work in progress
-        Submitted,   // 3 - Work submitted by freelancer
-        Completed,   // 4 - Job completed and paid
-        Cancelled,   // 5 - Job cancelled
-        Disputed     // 6 - Job in dispute
+    enum JobStatus {
+        Open, // 0 - Job is posted and accepting applications
+        Assigned, // 1 - Job assigned to freelancer
+        InProgress, // 2 - Work in progress
+        Submitted, // 3 - Work submitted by freelancer
+        Completed, // 4 - Job completed and paid
+        Cancelled, // 5 - Job cancelled
+        Disputed // 6 - Job in dispute
     }
 
     enum ApplicationStatus {
-        Pending,   // 0 - Application submitted
-        Accepted,  // 1 - Application accepted
-        Rejected   // 2 - Application rejected
+        Pending, // 0 - Application submitted
+        Accepted, // 1 - Application accepted
+        Rejected // 2 - Application rejected
     }
 
     struct Job {
@@ -55,7 +56,7 @@ contract JobManager is AccessControl, Pausable, ReentrancyGuard {
     }
 
     ISafeGigRegistry public registry;
-    
+
     Counters.Counter private jobCounter;
     Counters.Counter private applicationCounter;
 
@@ -66,12 +67,27 @@ contract JobManager is AccessControl, Pausable, ReentrancyGuard {
     mapping(address => uint256[]) public clientJobs;
     mapping(address => uint256[]) public freelancerJobs;
 
-    event JobPosted(uint256 indexed jobId, address indexed client, uint256 budget);
-    event JobApplicationSubmitted(uint256 indexed applicationId, uint256 indexed jobId, address indexed freelancer);
-    event ApplicationStatusUpdated(uint256 indexed applicationId, ApplicationStatus status);
+    event JobPosted(
+        uint256 indexed jobId,
+        address indexed client,
+        uint256 budget
+    );
+    event JobApplicationSubmitted(
+        uint256 indexed applicationId,
+        uint256 indexed jobId,
+        address indexed freelancer
+    );
+    event ApplicationStatusUpdated(
+        uint256 indexed applicationId,
+        ApplicationStatus status
+    );
     event JobAssigned(uint256 indexed jobId, address indexed freelancer);
     event JobStatusUpdated(uint256 indexed jobId, JobStatus status);
-    event JobCompleted(uint256 indexed jobId, address indexed freelancer, uint256 amount);
+    event JobCompleted(
+        uint256 indexed jobId,
+        address indexed freelancer,
+        uint256 amount
+    );
 
     modifier onlyRegisteredUser() {
         require(registry.isRegisteredUser(msg.sender), "User not registered");
@@ -80,20 +96,26 @@ contract JobManager is AccessControl, Pausable, ReentrancyGuard {
 
     modifier onlyClient() {
         uint8 userType = registry.getUserType(msg.sender);
-        require(userType == 2 || userType == 3, "Only clients can perform this action");
+        require(
+            userType == 2 || userType == 3,
+            "Only clients can perform this action"
+        );
         _;
     }
 
     modifier onlyFreelancer() {
         uint8 userType = registry.getUserType(msg.sender);
-        require(userType == 1 || userType == 3, "Only freelancers can perform this action");
+        require(
+            userType == 1 || userType == 3,
+            "Only freelancers can perform this action"
+        );
         _;
     }
 
     modifier onlyJobParticipant(uint256 _jobId) {
         require(
-            jobs[_jobId].client == msg.sender || 
-            jobs[_jobId].assignedFreelancer == msg.sender,
+            jobs[_jobId].client == msg.sender ||
+                jobs[_jobId].assignedFreelancer == msg.sender,
             "Not authorized for this job"
         );
         _;
@@ -114,7 +136,14 @@ contract JobManager is AccessControl, Pausable, ReentrancyGuard {
         string[] memory _requiredSkills,
         string[] memory _tags,
         bool _isUrgent
-    ) external onlyRegisteredUser onlyClient whenNotPaused nonReentrant returns (uint256) {
+    )
+        external
+        onlyRegisteredUser
+        onlyClient
+        whenNotPaused
+        nonReentrant
+        returns (uint256)
+    {
         require(bytes(_title).length > 0, "Title required");
         require(_budget > 0, "Budget must be greater than 0");
         require(_deadline > block.timestamp, "Deadline must be in the future");
@@ -140,6 +169,18 @@ contract JobManager is AccessControl, Pausable, ReentrancyGuard {
 
         clientJobs[msg.sender].push(jobId);
 
+        ISafeGigRegistry.ClientStats memory stats = registry.getClientStats(
+            msg.sender
+        );
+
+        registry.updateClientStats(
+            msg.sender,
+            stats.totalSpent + _budget,
+            stats.jobsPosted + 1,
+            stats.jobsCompleted,
+            stats.responseTime
+        );
+
         emit JobPosted(jobId, msg.sender, _budget);
         return jobId;
     }
@@ -149,7 +190,14 @@ contract JobManager is AccessControl, Pausable, ReentrancyGuard {
         string memory _proposalURI,
         uint256 _proposedBudget,
         uint256 _proposedDeadline
-    ) external onlyRegisteredUser onlyFreelancer whenNotPaused nonReentrant returns (uint256) {
+    )
+        external
+        onlyRegisteredUser
+        onlyFreelancer
+        whenNotPaused
+        nonReentrant
+        returns (uint256)
+    {
         require(jobs[_jobId].status == JobStatus.Open, "Job not available");
         require(jobs[_jobId].client != msg.sender, "Cannot apply to own job");
         require(_proposedBudget > 0, "Proposed budget must be greater than 0");
@@ -174,16 +222,47 @@ contract JobManager is AccessControl, Pausable, ReentrancyGuard {
         return applicationId;
     }
 
-    function acceptApplication(uint256 _applicationId) external whenNotPaused nonReentrant {
+    function acceptApplication(
+        uint256 _applicationId
+    ) external whenNotPaused nonReentrant {
         JobApplication storage application = applications[_applicationId];
         Job storage job = jobs[application.jobId];
 
-        require(job.client == msg.sender, "Only job owner can accept applications");
+        require(
+            job.client == msg.sender,
+            "Only job owner can accept applications"
+        );
         require(job.status == JobStatus.Open, "Job not available");
-        require(application.status == ApplicationStatus.Pending, "Application not pending");
+        require(
+            application.status == ApplicationStatus.Pending,
+            "Application not pending"
+        );
 
         // Update application status
         application.status = ApplicationStatus.Accepted;
+
+        // Calculate response time (time between application and acceptance)
+        uint256 responseTime = block.timestamp - application.appliedAt;
+
+        // Update client stats with new average response time
+        ISafeGigRegistry.ClientStats memory stats = registry.getClientStats(
+            msg.sender
+        );
+
+        // Calculate weighted average response time
+        uint256 totalResponses = stats.jobsCompleted > 0
+            ? stats.jobsCompleted
+            : 1;
+        uint256 newAvgResponseTime = ((stats.responseTime * totalResponses) +
+            responseTime) / (totalResponses + 1);
+
+        registry.updateClientStats(
+            msg.sender,
+            stats.totalSpent,
+            stats.jobsPosted,
+            stats.jobsCompleted,
+            newAvgResponseTime
+        );
 
         // Update job
         job.assignedFreelancer = application.freelancer;
@@ -197,36 +276,74 @@ contract JobManager is AccessControl, Pausable, ReentrancyGuard {
         // Reject all other pending applications
         uint256[] memory jobApps = jobApplications[application.jobId];
         for (uint256 i = 0; i < jobApps.length; i++) {
-            if (jobApps[i] != _applicationId && applications[jobApps[i]].status == ApplicationStatus.Pending) {
+            if (
+                jobApps[i] != _applicationId &&
+                applications[jobApps[i]].status == ApplicationStatus.Pending
+            ) {
                 applications[jobApps[i]].status = ApplicationStatus.Rejected;
-                emit ApplicationStatusUpdated(jobApps[i], ApplicationStatus.Rejected);
+                emit ApplicationStatusUpdated(
+                    jobApps[i],
+                    ApplicationStatus.Rejected
+                );
             }
         }
 
-        emit ApplicationStatusUpdated(_applicationId, ApplicationStatus.Accepted);
+        emit ApplicationStatusUpdated(
+            _applicationId,
+            ApplicationStatus.Accepted
+        );
         emit JobAssigned(application.jobId, application.freelancer);
     }
 
     function startWork(uint256 _jobId) external onlyJobParticipant(_jobId) {
         require(jobs[_jobId].status == JobStatus.Assigned, "Job not assigned");
-        require(jobs[_jobId].assignedFreelancer == msg.sender, "Only assigned freelancer can start work");
+        require(
+            jobs[_jobId].assignedFreelancer == msg.sender,
+            "Only assigned freelancer can start work"
+        );
 
         jobs[_jobId].status = JobStatus.InProgress;
         emit JobStatusUpdated(_jobId, JobStatus.InProgress);
     }
 
-    function submitWork(uint256 _jobId, string memory _deliveryURI) external onlyJobParticipant(_jobId) {
-        require(jobs[_jobId].status == JobStatus.InProgress, "Job not in progress");
-        require(jobs[_jobId].assignedFreelancer == msg.sender, "Only assigned freelancer can submit work");
+    function submitWork(
+        uint256 _jobId
+        // string memory _deliveryURI
+    ) external onlyJobParticipant(_jobId) {
+        require(
+            jobs[_jobId].status == JobStatus.InProgress,
+            "Job not in progress"
+        );
+        require(
+            jobs[_jobId].assignedFreelancer == msg.sender,
+            "Only assigned freelancer can submit work"
+        );
 
         jobs[_jobId].status = JobStatus.Submitted;
         // Store delivery URI in metadata or emit in event
         emit JobStatusUpdated(_jobId, JobStatus.Submitted);
     }
 
-    function updateJobStatus(uint256 _jobId, JobStatus _status) external onlyRole(ADMIN_ROLE) {
+    function updateJobStatus(
+        uint256 _jobId,
+        JobStatus _status
+    ) external onlyRole(ADMIN_ROLE) {
         jobs[_jobId].status = _status;
         emit JobStatusUpdated(_jobId, _status);
+
+        if (_status == JobStatus.Completed) {
+            // Auto-update freelancer stats
+            ISafeGigRegistry.FreelancerStats memory stats = registry
+                .freelancerStats(jobs[_jobId].assignedFreelancer);
+            registry.updateFreelancerStats(
+                jobs[_jobId].assignedFreelancer,
+                stats.jobsCompleted + 1,
+                stats.totalEarned + jobs[_jobId].budget,
+                stats.successRate, // Calculate based on completed vs total
+                stats.responseTime,
+                stats.hourlyRate
+            );
+        }
     }
 
     // View functions
@@ -234,26 +351,77 @@ contract JobManager is AccessControl, Pausable, ReentrancyGuard {
         return jobs[_jobId];
     }
 
-    function getJobApplications(uint256 _jobId) external view returns (uint256[] memory) {
+    function getJobApplications(
+        uint256 _jobId
+    ) external view returns (uint256[] memory) {
         return jobApplications[_jobId];
     }
 
-    function getClientJobs(address _client) external view returns (uint256[] memory) {
+    function getClientJobs(
+        address _client
+    ) external view returns (uint256[] memory) {
         return clientJobs[_client];
     }
 
-    function getFreelancerJobs(address _freelancer) external view returns (uint256[] memory) {
+    function completeJob(uint256 _jobId) external nonReentrant {
+        Job storage job = jobs[_jobId];
+        require(job.status == JobStatus.Submitted, "Job not submitted");
+        require(job.client == msg.sender, "Only client can complete job");
+
+        job.status = JobStatus.Completed;
+
+        ISafeGigRegistry.ClientStats memory stats = registry.getClientStats(
+            msg.sender
+        );
+        registry.updateClientStats(
+            msg.sender,
+            stats.totalSpent,
+            stats.jobsPosted,
+            stats.jobsCompleted + 1,
+            stats.responseTime
+        );
+
+        // Update freelancer stats
+        ISafeGigRegistry.FreelancerStats memory fStats = registry
+            .freelancerStats(job.assignedFreelancer);
+        registry.updateFreelancerStats(
+            job.assignedFreelancer,
+            fStats.jobsCompleted + 1,
+            fStats.totalEarned + job.budget,
+            fStats.successRate,
+            fStats.responseTime,
+            fStats.hourlyRate
+        );
+
+        emit JobCompleted(_jobId, job.assignedFreelancer, job.budget);
+        emit JobStatusUpdated(_jobId, JobStatus.Completed);
+    }
+
+    function getFreelancerJobs(
+        address _freelancer
+    ) external view returns (uint256[] memory) {
         return freelancerJobs[_freelancer];
     }
 
-    function getJobDetails(uint256 jobId) external view returns (
-        address client,
-        address freelancer,
-        uint256 budget,
-        uint8 status
-    ) {
+    function getJobDetails(
+        uint256 jobId
+    )
+        external
+        view
+        returns (
+            address client,
+            address freelancer,
+            uint256 budget,
+            uint8 status
+        )
+    {
         Job memory job = jobs[jobId];
-        return (job.client, job.assignedFreelancer, job.budget, uint8(job.status));
+        return (
+            job.client,
+            job.assignedFreelancer,
+            job.budget,
+            uint8(job.status)
+        );
     }
 
     function getTotalJobs() external view returns (uint256) {

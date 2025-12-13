@@ -1,6 +1,6 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { WalletButton } from "../wallet-button"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { WalletButton } from "../../contexts/wallet-button";
 
 export default function Navbar() {
   return (
@@ -10,18 +10,29 @@ export default function Navbar() {
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <Link href="/">
-                <h1 className="text-2xl font-serif font-bold text-primary">SafeGig</h1>
+                <h1 className="text-2xl font-serif font-bold text-primary">
+                  SafeGig
+                </h1>
               </Link>
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+            <Button
+              variant="ghost"
+              className="text-muted-foreground hover:text-foreground"
+            >
               Learn More
             </Button>
-            <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+            <Button
+              variant="ghost"
+              className="text-muted-foreground hover:text-foreground"
+            >
               Features
             </Button>
-            <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+            <Button
+              variant="ghost"
+              className="text-muted-foreground hover:text-foreground"
+            >
               Pricing
             </Button>
             <WalletButton />
@@ -29,5 +40,5 @@ export default function Navbar() {
         </div>
       </div>
     </nav>
-  )
+  );
 }

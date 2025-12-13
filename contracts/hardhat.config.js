@@ -16,9 +16,10 @@ module.exports = {
   networks: {
     hardhat: {},
     
-    flareTestnet: {
-      url: "https://coston2-api.flare.network/ext/C/rpc",
+    sepolia: {
+      url: process.env.SEPOLIA_RPC_URL || "https://sepolia.infura.io/v3/YOUR_INFURA_KEY",
       accounts: [process.env.PRIVATE_KEY],
+      chainId: 11155111,
     },
   },
 };

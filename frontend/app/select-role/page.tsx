@@ -2,16 +2,16 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useWallet } from '@/providers/WalletProvider';
 import { Users, Briefcase } from 'lucide-react';
 import Link from 'next/link';
-import { useWallet } from '@/lib/wallet-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 export default function SelectRolePage() {
   const { isConnected } = useWallet();
   const router = useRouter();
-
+ 
   useEffect(() => {
     if (!isConnected) {
       router.push('/');
@@ -56,7 +56,7 @@ export default function SelectRolePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
           {/* Client Card */}
           <Card className="border-border bg-card hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer group">
-            <Link href="/client">
+            <Link href="../dashboard/client">
               <CardHeader className="pb-4">
                 <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-500/20 transition-colors">
                   <Briefcase className="w-8 h-8 text-blue-400" />
@@ -93,7 +93,7 @@ export default function SelectRolePage() {
 
           {/* Freelancer Card */}
           <Card className="border-border bg-card hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer group">
-            <Link href="/freelancer">
+            <Link href="../dashboard/freelancer">
               <CardHeader className="pb-4">
                 <div className="w-16 h-16 bg-blue-600/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-600/20 transition-colors">
                   <Users className="w-8 h-8 text-blue-500" />

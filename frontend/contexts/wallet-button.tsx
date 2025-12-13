@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useWallet } from "@/lib/wallet-context";
 import { Wallet, LogOut } from "lucide-react";
 import {
   DropdownMenu,
@@ -10,6 +9,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
+import { useWallet } from "@/providers/WalletProvider";
+import { formatAddress } from "@/lib/utils";
 
 interface WalletButtonProps {
   variant?: "default" | "ghost" | "outline";
@@ -30,10 +31,6 @@ export function WalletButton({
     isConnecting,
   } = useWallet();
   const router = useRouter();
-
-  const formatAddress = (addr: string) => {
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
-  };
 
   const handleConnectWallet = async () => {
     try {

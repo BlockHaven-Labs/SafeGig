@@ -3,10 +3,10 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Wallet, Shield, Zap } from 'lucide-react';
-import { useWallet } from '@/lib/wallet-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Link from 'next/link';
+import { useWallet } from '@/providers/WalletProvider';
 
 export default function ConnectWalletPage() {
   const { isConnected, connectWallet, address } = useWallet();

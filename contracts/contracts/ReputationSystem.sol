@@ -109,7 +109,7 @@ contract ReputationSystem is AccessControl, Pausable {
         emit ReputationUpdated(_user, reputation.averageRating);
     }
 
-    function updateRating(address user, uint256 rating, uint256 jobId) external {
+    function updateRating(address user, uint256 rating/*, uint256 jobId*/) external {
         // This function is called by other contracts in the system
         require(hasRole(ADMIN_ROLE, msg.sender), "Only admin can update ratings");
         _updateReputation(user, rating);
