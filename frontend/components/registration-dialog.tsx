@@ -36,7 +36,7 @@ export function RegistrationDialog({ userType }: RegistrationDialogProps) {
   const [skillInput, setSkillInput] = useState("");
 
   const { address } = useWallet();
-  const { registerUser, isRegisteredUser, isLoading } = useRegistry();
+  const { registerUser, isRegisteredUser, getUserType, updateProfile, isLoading } = useRegistry();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -85,13 +85,71 @@ export function RegistrationDialog({ userType }: RegistrationDialogProps) {
     try {
       // Determine UserType enum value
       let userTypeEnum: UserType;
+
+      // First check if already registered
+      const currentUserType = await getUserType(address!);
+
+      if (currentUserType !== UserType.None) {
+        // User already registered - check if they want to add a role
+        if (currentUserType === UserType.Client && userType === "freelancer") {
+          // Upgrade to Both
+          userTypeEnum = UserType.Both;
+        } else if (
+          currentUserType === UserType.Freelancer &&
+          userType === "client"
+        ) {
+          // Upgrade to Both
+          userTypeEnum = UserType.Both;
+        } else if (currentUserType === UserType.Both) {
+          toast({
+            title: "Already Registered",
+            description:
+              "You're already registered as both Client and Freelancer!",
+          });
+          setOpen(false);
+          return;
+        } else {
+          toast({
+            title: "Already Registered",
+            description: `You're already registered as a ${
+              currentUserType === UserType.Client ? "Client" : "Freelancer"
+            }. This dashboard will work for you!`,
+          });
+          setOpen(false);
+          return;
+        }
+
+        // Update to Both instead of registering
+        const metadata = {
+          name: formData.name,
+          bio: formData.bio,
+          portfolioUrl: formData.portfolioUrl,
+          hourlyRate: formData.hourlyRate,
+          registeredAt: new Date().toISOString(),
+        };
+        const metadataURI = `data:application/json,${encodeURIComponent(
+          JSON.stringify(metadata)
+        )}`;
+
+        console.log("Updating user to Both type");
+        await updateProfile(metadataURI, formData.location, formData.skills);
+
+        toast({
+          title: "Profile Updated!",
+          description: "You can now use both Client and Freelancer dashboards.",
+        });
+        setOpen(false);
+        return;
+      }
+
+      // New registration
       if (userType === "freelancer") {
         userTypeEnum = UserType.Freelancer;
       } else {
         userTypeEnum = UserType.Client;
       }
 
-      // Create metadata object (in production, upload this to IPFS)
+      // Create metadata object
       const metadata = {
         name: formData.name,
         bio: formData.bio,
@@ -100,11 +158,15 @@ export function RegistrationDialog({ userType }: RegistrationDialogProps) {
         registeredAt: new Date().toISOString(),
       };
 
-      // For now, we'll use a JSON string as metadataURI
-      // In production, you'd upload to IPFS and use the hash
       const metadataURI = `data:application/json,${encodeURIComponent(
         JSON.stringify(metadata)
       )}`;
+
+      console.log("Registering new user with:", {
+        userType: userTypeEnum,
+        location: formData.location,
+        skills: formData.skills,
+      });
 
       await registerUser(
         userTypeEnum,
@@ -327,39 +389,37 @@ export function RegistrationDialog({ userType }: RegistrationDialogProps) {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="skills">
-                  Skills/Role in the Company
-                </Label>
-                  <Input
-                    id="skills"
-                    placeholder="Project manager, Developer, ...?"
-                    value={skillInput}
-                    onChange={(e) => setSkillInput(e.target.value)}
-                    onKeyDown={handleSkillKeyDown}
-                  />
-                  <Button type="button" variant="outline" onClick={addSkill}>
-                    Add
-                  </Button>
+                <Label htmlFor="skills">Skills/Role in the Company</Label>
+                <Input
+                  id="skills"
+                  placeholder="Project manager, Developer, ...?"
+                  value={skillInput}
+                  onChange={(e) => setSkillInput(e.target.value)}
+                  onKeyDown={handleSkillKeyDown}
+                />
+                <Button type="button" variant="outline" onClick={addSkill}>
+                  Add
+                </Button>
               </div>
               {formData.skills.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {formData.skills.map((skill) => (
-                      <div
-                        key={skill}
-                        className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm flex items-center gap-2"
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {formData.skills.map((skill) => (
+                    <div
+                      key={skill}
+                      className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm flex items-center gap-2"
+                    >
+                      {skill}
+                      <button
+                        type="button"
+                        onClick={() => removeSkill(skill)}
+                        className="hover:text-destructive font-bold"
                       >
-                        {skill}
-                        <button
-                          type="button"
-                          onClick={() => removeSkill(skill)}
-                          className="hover:text-destructive font-bold"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </>
           )}
 
