@@ -28,18 +28,35 @@ import { useRouter } from "next/navigation";
 import { useWallet } from "@/providers/WalletProvider";
 import { WalletButton } from "@/contexts/wallet-button";
 import { useEffect } from "react";
-import { useJobs, useEscrow, JobStatus } from "@/contexts";
+import {
+  useJobs,
+  useEscrow,
+  JobStatus,
+  useRegistry,
+  UserType,
+} from "@/contexts";
 import type { Job } from "@/contexts";
 import Link from "next/link";
 import { RegistrationDialog } from "@/components/registration-dialog";
 
-const getStatusColor = (status: string) => {
-  switch (status) {
+const getStatusColor = (status: JobStatus | string) => {
+  // Normalize enum or string to a slug like "in-progress" or "completed"
+  let raw: any = status;
+  if (typeof raw === "number" && typeof JobStatus !== "undefined") {
+    raw = JobStatus[raw];
+  }
+  const slug = String(raw || "")
+    .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
+    .toLowerCase()
+    .replace(/\s+/g, "-");
+
+  switch (slug) {
     case "pending":
       return "bg-yellow-100 text-yellow-800 border-yellow-200";
     case "accepted":
       return "bg-blue-100 text-blue-800 border-blue-200";
     case "in-progress":
+    case "inprogress":
       return "bg-blue-100 text-blue-800 border-blue-200";
     case "delivered":
       return "bg-purple-100 text-purple-800 border-purple-200";
@@ -52,13 +69,23 @@ const getStatusColor = (status: string) => {
   }
 };
 
-const getStatusIcon = (status: string) => {
-  switch (status) {
+const getStatusIcon = (status: JobStatus | string) => {
+  let raw: any = status;
+  if (typeof raw === "number" && typeof JobStatus !== "undefined") {
+    raw = JobStatus[raw];
+  }
+  const slug = String(raw || "")
+    .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
+    .toLowerCase()
+    .replace(/\s+/g, "-");
+
+  switch (slug) {
     case "pending":
       return <Clock className="w-4 h-4" />;
     case "accepted":
       return <DollarSign className="w-4 h-4" />;
     case "in-progress":
+    case "inprogress":
       return <Clock className="w-4 h-4" />;
     case "delivered":
       return <AlertTriangle className="w-4 h-4" />;
@@ -92,6 +119,7 @@ export default function FreelancerDashboard() {
   const [selectedGig, setSelectedGig] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [myJobs, setMyJobs] = useState<any[]>([]);
+  const { loadUserProfile, getClientStats } = useRegistry();
   const [availableJobs, setAvailableJobs] = useState<Job[]>([]);
   const [totalEarnings, setTotalEarnings] = useState(0);
 
@@ -190,7 +218,15 @@ export default function FreelancerDashboard() {
 
   const handleAcceptGig = async (gigId: number) => {
     try {
-      await applyForJob(gigId, "", "0", 0); // You can add a modal for proposal details
+      const job = await getJob(gigId);
+      if (!job) return;
+
+      await applyForJob(
+        gigId,
+        "", // replace with actual proposal URI: ipfs://proposal-metadata
+        job.budget,
+        job.deadline
+      );
       toast({
         title: "Application Sent",
         description: "Your application has been sent to the client.",
@@ -221,27 +257,92 @@ export default function FreelancerDashboard() {
     }
   };
 
-  const handleViewDetails = (gig: any) => {
-    const gigWithClientInfo = {
-      ...gig,
-      requirements: [
-        "Experience with React and Next.js",
-        "Knowledge of blockchain integration",
-        "Portfolio of previous work required",
-        "Available for video calls during EST hours",
-      ],
-      skills: ["React", "Next.js", "TypeScript", "Web3", "Smart Contracts"],
-      clientInfo: {
-        name: "Sarah Johnson",
-        avatar: "/professional-woman-avatar.png",
-        rating: 4.9,
-        totalJobs: 24,
-        location: "San Francisco, CA",
-        memberSince: "January 2023",
-      },
-    };
-    setSelectedGig(gigWithClientInfo);
-    setIsModalOpen(true);
+  const handleViewDetails = async (gig: any) => {
+    try {
+      setIsModalOpen(true); // Open modal immediately with loading state
+
+      // Fetch client profile from registry
+      const clientProfile = await loadUserProfile(gig.client);
+      const clientStats = await getClientStats(gig.client);
+
+      // Parse metadata if it exists
+      let clientMetadata = null;
+      if (clientProfile?.metadataURI) {
+        try {
+          // Handle data URI format
+          if (clientProfile.metadataURI.startsWith("data:application/json,")) {
+            const jsonString = decodeURIComponent(
+              clientProfile.metadataURI.replace("data:application/json,", "")
+            );
+            clientMetadata = JSON.parse(jsonString);
+          } else {
+            // Handle IPFS or other URIs - you'd need to fetch from IPFS
+            // For now, just log it
+            console.log("Non-data URI:", clientProfile.metadataURI);
+          }
+        } catch (error) {
+          console.error("Error parsing client metadata:", error);
+        }
+      }
+
+      // Calculate member since date
+      const memberSince = clientProfile?.registrationTime
+        ? new Date(clientProfile.registrationTime * 1000).toLocaleDateString(
+            "en-US",
+            {
+              month: "long",
+              year: "numeric",
+            }
+          )
+        : "Unknown";
+
+      const gigWithClientInfo = {
+        ...gig,
+        price: gig.budget,
+        currency: "ETH",
+        deadline: new Date(gig.deadline * 1000).toLocaleDateString(),
+        category: gig.tags?.[0] || "General",
+        postedDate: new Date(gig.createdAt * 1000).toLocaleDateString(),
+        requirements: gig.requiredSkills || [],
+        skills: gig.tags || [],
+        clientInfo: {
+          name:
+            clientMetadata?.name ||
+            `Client ${gig.client.slice(0, 6)}...${gig.client.slice(-4)}`,
+          avatar: clientMetadata?.portfolioUrl || "/placeholder.svg",
+          rating: 4.8, // You could calculate this from reviews if you have them
+          totalJobs: clientStats?.jobsPosted || 0,
+          location: clientProfile?.location || "Unknown",
+          memberSince: memberSince,
+        },
+      };
+
+      setSelectedGig(gigWithClientInfo);
+    } catch (error) {
+      console.error("Error fetching client details:", error);
+
+      // Fallback to basic info if fetch fails
+      const gigWithBasicInfo = {
+        ...gig,
+        price: gig.budget,
+        currency: "ETH",
+        deadline: new Date(gig.deadline * 1000).toLocaleDateString(),
+        category: gig.tags?.[0] || "General",
+        postedDate: new Date(gig.createdAt * 1000).toLocaleDateString(),
+        requirements: gig.requiredSkills || [],
+        skills: gig.tags || [],
+        clientInfo: {
+          name: `${gig.client.slice(0, 6)}...${gig.client.slice(-4)}`,
+          avatar: "/placeholder.svg",
+          rating: 0,
+          totalJobs: 0,
+          location: "Unknown",
+          memberSince: "Unknown",
+        },
+      };
+
+      setSelectedGig(gigWithBasicInfo);
+    }
   };
 
   return (
@@ -386,7 +487,7 @@ export default function FreelancerDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {filteredGigs.map((gig) => (
+                  {jobs.map((gig: any) => (
                     <div
                       key={gig.id}
                       className="border border-border rounded-lg p-4"
@@ -441,14 +542,15 @@ export default function FreelancerDashboard() {
                           <Button
                             size="sm"
                             onClick={() => handleAcceptGig(gig.id)}
+                            className="cursor-pointer"
                           >
-                            Send Request
+                            {isLoading ? "Sending Request" : "Send Request"}
                           </Button>
                         </div>
                       </div>
                     </div>
                   ))}
-                  {filteredGigs.length === 0 && (
+                  {jobs.length === 0 && (
                     <div className="text-center py-8 text-muted-foreground">
                       <p>No gigs match your search criteria.</p>
                     </div>
@@ -470,7 +572,7 @@ export default function FreelancerDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {myJobs
+                  {filteredGigs
                     .filter((job: any) =>
                       [
                         JobStatus.Assigned,

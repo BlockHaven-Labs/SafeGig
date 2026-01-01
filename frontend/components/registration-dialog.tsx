@@ -36,7 +36,14 @@ export function RegistrationDialog({ userType }: RegistrationDialogProps) {
   const [skillInput, setSkillInput] = useState("");
 
   const { address } = useWallet();
-  const { registerUser, isRegisteredUser, getUserType, updateProfile, isLoading } = useRegistry();
+  const {
+    registerUser,
+    isRegisteredUser,
+    getUserType,
+    updateProfile,
+    upgradeUserType,
+    isLoading,
+  } = useRegistry();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -52,10 +59,31 @@ export function RegistrationDialog({ userType }: RegistrationDialogProps) {
     try {
       setIsChecking(true);
       const isRegistered = await isRegisteredUser(address);
-      setOpen(!isRegistered); // Show dialog if not registered
+
+      if (!isRegistered) {
+        setOpen(true); // Not registered at all - show dialog
+        return;
+      }
+
+      // Check if user has the required type for this dashboard
+      const currentUserType = await getUserType(address);
+
+      if (userType === "freelancer") {
+        // For freelancer dashboard, need to be Freelancer or Both
+        const hasFreelancerAccess =
+          currentUserType === UserType.Freelancer ||
+          currentUserType === UserType.Both;
+        setOpen(!hasFreelancerAccess);
+      } else {
+        // For client dashboard, need to be Client or Both
+        const hasClientAccess =
+          currentUserType === UserType.Client ||
+          currentUserType === UserType.Both;
+        setOpen(!hasClientAccess);
+      }
     } catch (error) {
       console.error("Error checking registration:", error);
-      setOpen(true); // Show dialog on error (safer to assume not registered)
+      setOpen(true);
     } finally {
       setIsChecking(false);
     }
@@ -83,71 +111,9 @@ export function RegistrationDialog({ userType }: RegistrationDialogProps) {
     }
 
     try {
-      // Determine UserType enum value
-      let userTypeEnum: UserType;
-
-      // First check if already registered
+      // Check current registration status
+      const isRegistered = await isRegisteredUser(address!);
       const currentUserType = await getUserType(address!);
-
-      if (currentUserType !== UserType.None) {
-        // User already registered - check if they want to add a role
-        if (currentUserType === UserType.Client && userType === "freelancer") {
-          // Upgrade to Both
-          userTypeEnum = UserType.Both;
-        } else if (
-          currentUserType === UserType.Freelancer &&
-          userType === "client"
-        ) {
-          // Upgrade to Both
-          userTypeEnum = UserType.Both;
-        } else if (currentUserType === UserType.Both) {
-          toast({
-            title: "Already Registered",
-            description:
-              "You're already registered as both Client and Freelancer!",
-          });
-          setOpen(false);
-          return;
-        } else {
-          toast({
-            title: "Already Registered",
-            description: `You're already registered as a ${
-              currentUserType === UserType.Client ? "Client" : "Freelancer"
-            }. This dashboard will work for you!`,
-          });
-          setOpen(false);
-          return;
-        }
-
-        // Update to Both instead of registering
-        const metadata = {
-          name: formData.name,
-          bio: formData.bio,
-          portfolioUrl: formData.portfolioUrl,
-          hourlyRate: formData.hourlyRate,
-          registeredAt: new Date().toISOString(),
-        };
-        const metadataURI = `data:application/json,${encodeURIComponent(
-          JSON.stringify(metadata)
-        )}`;
-
-        console.log("Updating user to Both type");
-        await updateProfile(metadataURI, formData.location, formData.skills);
-
-        toast({
-          title: "Profile Updated!",
-          description: "You can now use both Client and Freelancer dashboards.",
-        });
-        setOpen(false);
-        return;
-      }
-
-      // New registration
-      if (userType === "freelancer") {
-        userTypeEnum = UserType.Freelancer;
-      } else {
-        userTypeEnum = UserType.Client;
-      }
 
       // Create metadata object
       const metadata = {
@@ -157,10 +123,54 @@ export function RegistrationDialog({ userType }: RegistrationDialogProps) {
         hourlyRate: formData.hourlyRate,
         registeredAt: new Date().toISOString(),
       };
-
       const metadataURI = `data:application/json,${encodeURIComponent(
         JSON.stringify(metadata)
       )}`;
+
+      // Case 1: User is already registered - upgrade to Both
+      if (isRegistered && currentUserType !== UserType.None) {
+        if (currentUserType === UserType.Both) {
+          toast({
+            title: "Already Registered",
+            description:
+              "You're already registered as both Client and Freelancer!",
+          });
+          setOpen(false);
+          return;
+        }
+
+        // Check if trying to register for the same type
+        if (
+          (currentUserType === UserType.Client && userType === "client") ||
+          (currentUserType === UserType.Freelancer && userType === "freelancer")
+        ) {
+          toast({
+            title: "Already Registered",
+            description: `You're already registered as a ${userType}. This dashboard will work for you!`,
+          });
+          setOpen(false);
+          return;
+        }
+        console.log("Upgrading user to Both type");
+
+        // For now, just update the profile
+        await updateProfile(metadataURI, formData.location, formData.skills);
+        await upgradeUserType(UserType.Both);
+
+        toast({
+          title: "Profile Updated!",
+          description: "You can now use both Client and Freelancer dashboards.",
+        });
+        setOpen(false);
+        return;
+      }
+      // Case 2: New registration
+      let userTypeEnum: UserType;
+      if (userType === "freelancer") {
+        userTypeEnum = UserType.Freelancer;
+      } else {
+        userTypeEnum = UserType.Client;
+      }
 
       console.log("Registering new user with:", {
         userType: userTypeEnum,
@@ -180,6 +190,13 @@ export function RegistrationDialog({ userType }: RegistrationDialogProps) {
         description: `Welcome to SafeGig! You're now registered as a ${userType}.`,
       });
 
+      setOpen(false);
+
+      console.log("Registering new user with:", {
+        userType: userTypeEnum,
+        location: formData.location,
+        skills: formData.skills,
+      });
       setOpen(false);
     } catch (error: any) {
       console.error("Error registering user:", error);

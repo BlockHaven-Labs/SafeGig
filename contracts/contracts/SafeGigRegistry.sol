@@ -111,6 +111,27 @@ contract SafeGigRegistry is AccessControl, Pausable, ReentrancyGuard {
         emit ProfileUpdated(msg.sender, _metadataURI);
     }
 
+    function upgradeUserType(UserType _newUserType) external {
+        require(
+            userProfiles[msg.sender].userType != UserType.None,
+            "User not registered"
+        );
+        require(_newUserType != UserType.None, "Invalid user type");
+
+        UserType currentType = userProfiles[msg.sender].userType;
+
+        // Only allow upgrading to Both
+        require(
+            (currentType == UserType.Client && _newUserType == UserType.Both) ||
+                (currentType == UserType.Freelancer &&
+                    _newUserType == UserType.Both),
+            "Can only upgrade to Both"
+        );
+
+        userProfiles[msg.sender].userType = _newUserType;
+        emit ProfileUpdated(msg.sender, userProfiles[msg.sender].metadataURI);
+    }
+
     function verifyUser(address _user) external onlyRole(MODERATOR_ROLE) {
         require(
             userProfiles[_user].userType != UserType.None,
