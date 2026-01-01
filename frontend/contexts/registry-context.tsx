@@ -52,6 +52,7 @@ interface RegistryContextType {
     location: string,
     skills: string[]
   ) => Promise<void>
+  upgradeUserType: (newUserType: UserType) => Promise<void>
   isRegisteredUser: (userAddress: string) => Promise<boolean>
   getUserType: (userAddress: string) => Promise<UserType>
   getUserProfile: (userAddress: string) => Promise<string>
@@ -142,6 +143,21 @@ export function RegistryProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false)
     }
   }
+
+  const upgradeUserType = async (newUserType: UserType) => {
+  if (!address) throw new Error("Wallet not connected");
+  
+  setIsLoading(true);
+  try {
+    const contract = getRegistryContract();
+    const tx = await contract.upgradeUserType(newUserType);
+    await tx.wait();
+    
+    await loadUserProfile();
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const isRegisteredUser = async (userAddress: string): Promise<boolean> => {
     try {
@@ -257,6 +273,7 @@ export function RegistryProvider({ children }: { children: React.ReactNode }) {
     userProfile,
     registerUser,
     updateProfile,
+    upgradeUserType,
     isRegisteredUser,
     getUserType,
     getUserProfile,

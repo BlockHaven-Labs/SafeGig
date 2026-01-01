@@ -36,7 +36,14 @@ export function RegistrationDialog({ userType }: RegistrationDialogProps) {
   const [skillInput, setSkillInput] = useState("");
 
   const { address } = useWallet();
-  const { registerUser, isRegisteredUser, isLoading } = useRegistry();
+  const {
+    registerUser,
+    isRegisteredUser,
+    getUserType,
+    updateProfile,
+    upgradeUserType,
+    isLoading,
+  } = useRegistry();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -52,10 +59,31 @@ export function RegistrationDialog({ userType }: RegistrationDialogProps) {
     try {
       setIsChecking(true);
       const isRegistered = await isRegisteredUser(address);
-      setOpen(!isRegistered); // Show dialog if not registered
+
+      if (!isRegistered) {
+        setOpen(true); // Not registered at all - show dialog
+        return;
+      }
+
+      // Check if user has the required type for this dashboard
+      const currentUserType = await getUserType(address);
+
+      if (userType === "freelancer") {
+        // For freelancer dashboard, need to be Freelancer or Both
+        const hasFreelancerAccess =
+          currentUserType === UserType.Freelancer ||
+          currentUserType === UserType.Both;
+        setOpen(!hasFreelancerAccess);
+      } else {
+        // For client dashboard, need to be Client or Both
+        const hasClientAccess =
+          currentUserType === UserType.Client ||
+          currentUserType === UserType.Both;
+        setOpen(!hasClientAccess);
+      }
     } catch (error) {
       console.error("Error checking registration:", error);
-      setOpen(true); // Show dialog on error (safer to assume not registered)
+      setOpen(true);
     } finally {
       setIsChecking(false);
     }
@@ -83,15 +111,11 @@ export function RegistrationDialog({ userType }: RegistrationDialogProps) {
     }
 
     try {
-      // Determine UserType enum value
-      let userTypeEnum: UserType;
-      if (userType === "freelancer") {
-        userTypeEnum = UserType.Freelancer;
-      } else {
-        userTypeEnum = UserType.Client;
-      }
+      // Check current registration status
+      const isRegistered = await isRegisteredUser(address!);
+      const currentUserType = await getUserType(address!);
 
-      // Create metadata object (in production, upload this to IPFS)
+      // Create metadata object
       const metadata = {
         name: formData.name,
         bio: formData.bio,
@@ -99,12 +123,60 @@ export function RegistrationDialog({ userType }: RegistrationDialogProps) {
         hourlyRate: formData.hourlyRate,
         registeredAt: new Date().toISOString(),
       };
-
-      // For now, we'll use a JSON string as metadataURI
-      // In production, you'd upload to IPFS and use the hash
       const metadataURI = `data:application/json,${encodeURIComponent(
         JSON.stringify(metadata)
       )}`;
+
+      // Case 1: User is already registered - upgrade to Both
+      if (isRegistered && currentUserType !== UserType.None) {
+        if (currentUserType === UserType.Both) {
+          toast({
+            title: "Already Registered",
+            description:
+              "You're already registered as both Client and Freelancer!",
+          });
+          setOpen(false);
+          return;
+        }
+
+        // Check if trying to register for the same type
+        if (
+          (currentUserType === UserType.Client && userType === "client") ||
+          (currentUserType === UserType.Freelancer && userType === "freelancer")
+        ) {
+          toast({
+            title: "Already Registered",
+            description: `You're already registered as a ${userType}. This dashboard will work for you!`,
+          });
+          setOpen(false);
+          return;
+        }
+        console.log("Upgrading user to Both type");
+
+        // For now, just update the profile
+        await updateProfile(metadataURI, formData.location, formData.skills);
+        await upgradeUserType(UserType.Both);
+
+        toast({
+          title: "Profile Updated!",
+          description: "You can now use both Client and Freelancer dashboards.",
+        });
+        setOpen(false);
+        return;
+      }
+      // Case 2: New registration
+      let userTypeEnum: UserType;
+      if (userType === "freelancer") {
+        userTypeEnum = UserType.Freelancer;
+      } else {
+        userTypeEnum = UserType.Client;
+      }
+
+      console.log("Registering new user with:", {
+        userType: userTypeEnum,
+        location: formData.location,
+        skills: formData.skills,
+      });
 
       await registerUser(
         userTypeEnum,
@@ -118,6 +190,13 @@ export function RegistrationDialog({ userType }: RegistrationDialogProps) {
         description: `Welcome to SafeGig! You're now registered as a ${userType}.`,
       });
 
+      setOpen(false);
+
+      console.log("Registering new user with:", {
+        userType: userTypeEnum,
+        location: formData.location,
+        skills: formData.skills,
+      });
       setOpen(false);
     } catch (error: any) {
       console.error("Error registering user:", error);
@@ -327,39 +406,37 @@ export function RegistrationDialog({ userType }: RegistrationDialogProps) {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="skills">
-                  Skills/Role in the Company
-                </Label>
-                  <Input
-                    id="skills"
-                    placeholder="Project manager, Developer, ...?"
-                    value={skillInput}
-                    onChange={(e) => setSkillInput(e.target.value)}
-                    onKeyDown={handleSkillKeyDown}
-                  />
-                  <Button type="button" variant="outline" onClick={addSkill}>
-                    Add
-                  </Button>
+                <Label htmlFor="skills">Skills/Role in the Company</Label>
+                <Input
+                  id="skills"
+                  placeholder="Project manager, Developer, ...?"
+                  value={skillInput}
+                  onChange={(e) => setSkillInput(e.target.value)}
+                  onKeyDown={handleSkillKeyDown}
+                />
+                <Button type="button" variant="outline" onClick={addSkill}>
+                  Add
+                </Button>
               </div>
               {formData.skills.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {formData.skills.map((skill) => (
-                      <div
-                        key={skill}
-                        className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm flex items-center gap-2"
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {formData.skills.map((skill) => (
+                    <div
+                      key={skill}
+                      className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm flex items-center gap-2"
+                    >
+                      {skill}
+                      <button
+                        type="button"
+                        onClick={() => removeSkill(skill)}
+                        className="hover:text-destructive font-bold"
                       >
-                        {skill}
-                        <button
-                          type="button"
-                          onClick={() => removeSkill(skill)}
-                          className="hover:text-destructive font-bold"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </>
           )}
 

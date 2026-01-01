@@ -19,8 +19,6 @@ import { useJobs, useEscrow, useDispute, JobStatus } from "@/contexts";
 import type { Job } from "@/contexts";
 import { RegistrationDialog } from "@/components/registration-dialog";
 import Link from "next/link";
-import { DebugRegistrationChecker } from "@/components/DebugRegistrationChecker";
-import { GrantRoleHelper } from "@/components/GrantRoleHelper";
 
 const getStatusColor = (status: JobStatus) => {
   switch (status) {
@@ -547,10 +545,6 @@ export default function ClientDashboard() {
             </Card>
           </div>
         </div>
-      </div>
-      <div className="mb-4">
-        <DebugRegistrationChecker />
-        <GrantRoleHelper />
       </div>
       <PostGigDialog
         open={isPostGigOpen}
