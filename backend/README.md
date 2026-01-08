@@ -36,6 +36,12 @@ cp .env.example .env
 
 Open `.env` and configure your local PostgreSQL credentials:
 
+## Option 1: Connection String (Recommended)
+```ini
+DATABASE_URL=postgresql://username:password@localhost:5432/safegig
+```
+
+## Option 2: Individual Parameters
 ```ini
 PORT=3000
 
@@ -55,28 +61,27 @@ This project uses **TypeORM** to manage the database schema. You must run migrat
 
 #### Run Migrations (Apply Schema)
 
-```bash
-# Using the package.json script (recommended)
-yarn migration:run
-
-# Alternative (direct TypeORM CLI command)
-npx typeorm-ts-node-commonjs migration:run -d ./data-source.ts
+##### Generate a New Migration
+- Run this after you create or modify entity files:
+```bashyarn 
+migration:generate
 ```
+This auto-generates a migration based on your entity changes.
 
-#### Generate Migrations (After Changing Entities)
-
-If you modify an entity (for example, adding a field to `User`), generate a new migration file:
-
-```bash
-yarn migration:generate src/migrations/NameOfChange
+##### Run Migrations
+- Apply all pending migrations to your database:
+```bashyarn 
+migration:run
 ```
-
-#### Revert Last Migration
-
-To undo the most recent migration:
-
-```bash
-yarn migration:revert
+##### Check Migration Status
+- See which migrations have been applied:
+```bashyarn 
+migration:show
+```
+##### Revert Last Migration
+- Undo the most recent migration:
+```bashyarn 
+migration:revert
 ```
 
 ---

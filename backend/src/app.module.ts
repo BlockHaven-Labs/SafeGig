@@ -10,9 +10,12 @@ import { EscrowModule } from './modules/escrow/escrow.module';
 import { FilesModule } from './modules/files/files.module';
 import { MessagingModule } from './modules/messaging/messaging.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { UsersController } from './modules/users/users.controller';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
@@ -25,7 +28,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     MessagingModule,
     NotificationsModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, UsersController],
   providers: [AppService],
 })
 export class AppModule {}

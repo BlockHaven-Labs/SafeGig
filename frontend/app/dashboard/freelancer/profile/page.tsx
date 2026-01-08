@@ -83,15 +83,45 @@ export default function FreelancerProfile() {
       // Load user profile
       const profile = await loadUserProfile(address!);
       if (profile) {
+        let metadata = {
+          name: "Anonymous User",
+          title: "Freelancer",
+          bio: "",
+          languages: ["English"],
+          experience: "",
+        };
+
+        // Parse metadataURI if it exists and looks like JSON
+        if (profile.metadataURI) {
+          try {
+            // Check if it starts with ipfs:// (from your backend)
+            if (profile.metadataURI.startsWith("ipfs://")) {
+              // Fetch from your backend
+              const response = await fetch(
+                `http://localhost:3000/users/ipfs/${profile.metadataURI.replace(
+                  "ipfs://",
+                  ""
+                )}`
+              );
+              metadata = await response.json();
+            } else if (profile.metadataURI.startsWith("{")) {
+              // It's raw JSON (old data)
+              metadata = JSON.parse(profile.metadataURI);
+            }
+          } catch (e) {
+            console.error("Failed to parse metadata:", e);
+          }
+        }
+
         setProfileData({
-          name: profile.metadataURI || "Anonymous User",
-          title: "Freelancer", // You can store this in metadata
-          bio: profile.metadataURI || "", // Parse from metadata if stored as JSON
+          name: metadata.name || "Anonymous User",
+          title: metadata.title || "Freelancer",
+          bio: metadata.bio || "",
           location: profile.location || "",
-          hourlyRate: "0 ETH/hour", // Get from stats
+          hourlyRate: "0 ETH/hour",
           skills: profile.skills || [],
-          languages: ["English"], // Can be added to profile
-          experience: "", // Can be added to profile
+          languages: metadata.languages || ["English"],
+          experience: metadata.experience || "",
           availability: profile.isActive ? "Available" : "Unavailable",
         });
       }
@@ -400,7 +430,8 @@ export default function FreelancerProfile() {
               </CardHeader>
               <CardContent>
                 {isEditing ? (
-                  <Textarea placeholder="Describe yourself"
+                  <Textarea
+                    placeholder="Describe yourself"
                     value={profileData.bio}
                     onChange={(e) =>
                       setProfileData({ ...profileData, bio: e.target.value })

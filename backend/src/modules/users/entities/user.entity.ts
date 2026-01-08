@@ -1,28 +1,53 @@
 import {
-  Column,
-  CreateDateColumn,
   Entity,
   PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
   UpdateDateColumn,
+  OneToOne,
+  OneToMany,
 } from 'typeorm';
+import { UserProfile } from './user-profile.entity';
+import { UserSkill } from './user-skill.entity';
 
-@Entity({ name: 'users' })
+@Entity('users')
 export class User {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-  @Column({ type: 'varchar', length: 255, unique: true })
-  email: string;
+  @Column({ unique: true, length: 42 })
+  wallet_address: string;
 
-  @Column({ type: 'varchar', length: 255 })
-  password: string;
+  @Column({ type: 'text', nullable: true })
+  metadata_uri: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
-  name?: string;
+  @Column({ type: 'smallint', nullable: true })
+  user_type: number; // 0=None, 1=Freelancer, 2=Client, 3=Both
 
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+  @Column({ length: 255, nullable: true })
+  location: string;
 
-  @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
+  @Column({ default: true })
+  is_active: boolean;
+
+  @Column({ default: false })
+  is_verified: boolean;
+
+  @Column({ type: 'bigint', nullable: true })
+  registration_time: number;
+
+  @Column({ type: 'bigint', nullable: true })
+  last_synced_block: number;
+
+  @CreateDateColumn()
+  created_at: Date;
+
+  @UpdateDateColumn()
+  updated_at: Date;
+
+  @OneToOne(() => UserProfile, (profile) => profile.user)
+  profile: UserProfile;
+
+  @OneToMany(() => UserSkill, (skill) => skill.user)
+  skills: UserSkill[];
 }

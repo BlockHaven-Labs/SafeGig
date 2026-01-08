@@ -1,0 +1,11 @@
+GET http://localhost:3000/users/ipfs/:hash
+
+# get user profile data
+GET http://localhost:3000/users/profile/0xd68413bCB4e5c3A4e80054063e7904a30aaAEc89
+
+
+# Check what was synced
+POST http://localhost:3000/users/sync
+
+# Check blockchain connection
+GET http://localhost:3000/users/health/blockchain
