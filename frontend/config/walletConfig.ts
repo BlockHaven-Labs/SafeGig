@@ -1,4 +1,3 @@
-// config/walletConfig.ts
 import { createAppKit } from "@reown/appkit";
 import { EthersAdapter } from "@reown/appkit-adapter-ethers";
 import type { AppKitNetwork } from "@reown/appkit/networks";

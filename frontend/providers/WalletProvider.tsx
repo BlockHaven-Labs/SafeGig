@@ -9,7 +9,7 @@ import {
 } from "react";
 import { getAppKit } from "@/config/walletConfig";
 import { Toaster } from "sonner";
-import { BrowserProvider, JsonRpcSigner } from "ethers";
+import { BrowserProvider, JsonRpcSigner, ethers } from "ethers";
 import type { Provider } from "@reown/appkit-adapter-ethers";
 
 interface WalletContextType {
@@ -36,6 +36,28 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [appKit, setAppKit] = useState<ReturnType<typeof getAppKit> | null>(
     null
   );
+
+  const fetchBalance = useCallback(async () => {
+    if (!provider || !address) {
+      setBalance(null);
+      return;
+    }
+
+    try {
+      const ethersProvider = new BrowserProvider(provider as any);
+      const balanceWei = await ethersProvider.getBalance(address);
+      const balanceEth = ethers.formatEther(balanceWei);
+      // Format to 4 decimal places
+      setBalance(parseFloat(balanceEth).toFixed(4));
+    } catch (error) {
+      console.error("Failed to fetch balance:", error);
+      setBalance("0");
+    }
+  }, [provider, address]);
+
+  useEffect(() => {
+    fetchBalance();
+  }, [fetchBalance]);
 
   useEffect(() => {
     const createSigner = async () => {
@@ -122,6 +144,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       setIsConnected(false);
       setAddress(null);
       setProvider(null);
+      setBalance(null);
     } catch (error) {
       console.error("Failed to disconnect:", error);
       throw error;
