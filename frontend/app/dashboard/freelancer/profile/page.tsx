@@ -38,9 +38,8 @@ export default function FreelancerProfile() {
     successRate: "0%",
   });
   const {
-    userProfile,
+    updateProfileWithIPFS,
     loadUserProfile,
-    updateProfile,
     getFreelancerStats,
     isLoading,
   } = useRegistry();
@@ -84,8 +83,8 @@ export default function FreelancerProfile() {
       const profile = await loadUserProfile(address!);
       if (profile) {
         let metadata = {
-          name: "Anonymous User",
-          title: "Freelancer",
+          name: "",
+          title: "",
           bio: "",
           languages: ["English"],
           experience: "",
@@ -114,7 +113,7 @@ export default function FreelancerProfile() {
         }
 
         setProfileData({
-          name: metadata.name || "Anonymous User",
+          name: metadata.name || "",
           title: metadata.title || "Freelancer",
           bio: metadata.bio || "",
           location: profile.location || "",
@@ -160,21 +159,15 @@ export default function FreelancerProfile() {
     }
 
     try {
-      // You can store additional data as JSON in metadataURI
-      // For now, we'll just update the basic fields
-      const metadataURI = JSON.stringify({
+      await updateProfileWithIPFS({
         name: profileData.name,
         title: profileData.title,
         bio: profileData.bio,
         languages: profileData.languages,
         experience: profileData.experience,
+        location: profileData.location,
+        skills: profileData.skills,
       });
-
-      await updateProfile(
-        metadataURI,
-        profileData.location,
-        profileData.skills
-      );
 
       toast({
         title: "Profile Updated",
@@ -279,7 +272,7 @@ export default function FreelancerProfile() {
                         }
                         className="text-center"
                       />
-                      <Input
+                      <Input placeholder="(occupational) title/role"
                         value={profileData.title}
                         onChange={(e) =>
                           setProfileData({

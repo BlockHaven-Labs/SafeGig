@@ -3,6 +3,20 @@ GET http://localhost:3000/users/ipfs/:hash
 # get user profile data
 GET http://localhost:3000/users/profile/0xd68413bCB4e5c3A4e80054063e7904a30aaAEc89
 
+# update profile
+POST http://localhost:3000/users/profile
+Content-Type: application/json
+
+{
+  "walletAddress": "0xd68413bCB4e5c3A4e80054063e7904a30aaAEc89",
+  "profileData": {
+    "name": "Test User",
+    "title": "Developer",
+    "bio": "Test bio",
+    "languages": ["English"],
+    "experience": "5 years"
+  }
+}
 
 # Check what was synced
 POST http://localhost:3000/users/sync

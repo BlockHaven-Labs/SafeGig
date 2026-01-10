@@ -16,3 +16,6 @@ out/
 .env
 .env.local
 .env.*.local
+
+# personal notes
+personalDocumentation.md

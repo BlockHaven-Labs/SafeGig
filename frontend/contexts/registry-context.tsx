@@ -53,6 +53,7 @@ interface RegistryContextType {
     skills: string[]
   ) => Promise<void>;
   upgradeUserType: (newUserType: UserType) => Promise<void>;
+  updateProfileWithIPFS: (profileData: any) => Promise<void>
   isRegisteredUser: (userAddress: string) => Promise<boolean>;
   getUserType: (userAddress: string) => Promise<UserType>;
   getUserProfile: (userAddress: string) => Promise<string>;
@@ -299,6 +300,7 @@ export function RegistryProvider({ children }: { children: React.ReactNode }) {
     registerUser,
     updateProfile,
     upgradeUserType,
+    updateProfileWithIPFS,
     isRegisteredUser,
     getUserType,
     getUserProfile,
